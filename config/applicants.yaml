@@ -1,0 +1,345 @@
+# Applicant Profiles for Auto-Apply System
+#
+# This configuration defines TWO applicant profiles with strict isolation:
+# - tech_profile: Software/automation/engineering roles
+# - biotech_profile: Laboratory/research/biotechnology roles
+#
+# Each profile has:
+# - display_name: Applicant's full name (used in email signature)
+# - applicant_name: Same as display_name (for template placeholders)
+# - cv_path: Path to PDF resume
+# - keywords_positive: English keywords that indicate this profile
+# - keywords_negative: Keywords from OTHER profile (to prevent cross-contamination)
+# - threshold: Minimum score to be considered a match (0.7 = 70% confidence)
+# - email_templates: List of email templates with placeholders
+
+applicants:
+  tech_profile:
+    display_name: "Tech Applicant"
+    applicant_name: "Tech Applicant"
+    cv_path: "./data/cv/tech_cv.pdf"
+    keywords_positive:
+      # Core Programming
+      - "software"
+      - "developer"
+      - "programmer"
+      - "engineer"
+      - "coding"
+      - "coder"
+      - "full stack"
+      - "full-stack"
+      - "backend"
+      - "back-end"
+      - "frontend"
+      - "front-end"
+      # Languages & Frameworks
+      - "python"
+      - "javascript"
+      - "typescript"
+      - "java"
+      - "c++"
+      - "c#"
+      - "c sharp"
+      - "golang"
+      - "go"
+      - "rust"
+      - "ruby"
+      - "php"
+      - "swift"
+      - "kotlin"
+      - "scala"
+      - "react"
+      - "angular"
+      - "vue"
+      - "next.js"
+      - "node"
+      - "nodejs"
+      - "node.js"
+      - "django"
+      - "flask"
+      - "spring"
+      # DevOps & Infrastructure
+      - "devops"
+      - "docker"
+      - "kubernetes"
+      - "k8s"
+      - "aws"
+      - "azure"
+      - "gcp"
+      - "cloud"
+      - "linux"
+      - "unix"
+      - "ci/cd"
+      - "cicd"
+      - "infrastructure"
+      - "terraform"
+      - "ansible"
+      # Data & Databases
+      - "database"
+      - "sql"
+      - "nosql"
+      - "mongodb"
+      - "postgresql"
+      - "mysql"
+      - "data engineer"
+      - "etl"
+      - "data pipeline"
+      # Automation & Scripting
+      - "automation"
+      - "automate"
+      - "script"
+      - "scripting"
+      - "bash"
+      - "powershell"
+      - "cron"
+      # AI/ML
+      - "machine learning"
+      - "ai"
+      - "artificial intelligence"
+      - "ml"
+      - "deep learning"
+      - "nlp"
+      - "llm"
+      # Web & API
+      - "web"
+      - "api"
+      - "rest"
+      - "graphql"
+      - "microservice"
+      - "backend"
+      # Security
+      - "cybersecurity"
+      - "security"
+      - "pentest"
+      - "devsecops"
+    keywords_negative:
+      # Biotech/lab terms (to prevent cross-contamination)
+      - "biology"
+      - "biotechnology"
+      - "biotech"
+      - "lab"
+      - "laboratory"
+      - "research assistant"
+      - "lab technician"
+      - "wet lab"
+      - "clinical"
+      - "healthcare"
+      - "medical device"
+      - "pharmaceutical"
+      - "genomics"
+      - "genome"
+      - "sequencing"
+      - "bioinformatics"
+      - "pcr"
+      - "assay"
+      - "cell culture"
+      - "pipette"
+      - "molecular biology"
+      - "chemistry"
+      - "chemical"
+      - "test tube"
+      - "centrifuge"
+    threshold: 0.7
+    email_templates:
+      - template_id: "tech_template_1"
+        subject: "Application for {{JOB_TITLE}} position"
+        body: |
+          Dear Hiring Manager,
+
+          I am writing to express my interest in the {{JOB_TITLE}} position.
+
+          With my background in software engineering, cloud infrastructure, and automation, I believe I would be a strong fit for this role. I have extensive experience in developing scalable applications and implementing efficient solutions.
+
+          I have attached my resume for your review and would welcome the opportunity to discuss how my skills align with your needs.
+
+          Thank you for your consideration.
+
+          Best regards,
+          {{APPLICANT_NAME}}
+
+          --
+          Source: {{SOURCE_LINK}}
+      - template_id: "tech_template_2"
+        subject: "{{JOB_TITLE}} - Application"
+        body: |
+          Hello,
+
+          I came across your posting for the {{JOB_TITLE}} position and would like to submit my application.
+
+          My experience spans software development, DevOps, and automation engineering. I am passionate about building robust systems and solving complex technical challenges.
+
+          I would appreciate the opportunity to discuss this position further.
+
+          Best regards,
+          {{APPLICANT_NAME}}
+
+          --
+          Source: {{SOURCE_LINK}}
+      - template_id: "tech_template_3"
+        subject: "Re: {{JOB_TITLE}}"
+        body: |
+          Dear Hiring Team,
+
+          I am excited to apply for the {{JOB_TITLE}} position at your organization.
+
+          With expertise in software development, cloud platforms, and automation, I am confident in my ability to contribute effectively to your team. I have a proven track record of delivering high-quality solutions.
+
+          Please find my resume attached. I look forward to hearing from you.
+
+          Best regards,
+          {{APPLICANT_NAME}}
+
+          --
+          Source: {{SOURCE_LINK}}
+
+  biotech_profile:
+    display_name: "Biotech Applicant"
+    applicant_name: "Biotech Applicant"
+    cv_path: "./data/cv/biotech_cv.pdf"
+    keywords_positive:
+      # Core Biotech
+      - "biology"
+      - "biotechnology"
+      - "biotech"
+      - "biochemistry"
+      - "molecular biology"
+      # Lab & Research
+      - "lab"
+      - "laboratory"
+      - "research"
+      - "research assistant"
+      - "lab technician"
+      - "wet lab"
+      - "experiments"
+      # Genomics & Sequencing
+      - "genomics"
+      - "genome"
+      - "sequencing"
+      - "ngs"
+      - "next generation sequencing"
+      - "dna"
+      - "rna"
+      # Bioinformatics
+      - "bioinformatics"
+      - "computational biology"
+      # Clinical & Healthcare
+      - "clinical"
+      - "healthcare"
+      - "medical"
+      - "medical device"
+      - "pharmaceutical"
+      - "drug discovery"
+      # Lab Techniques
+      - "pcr"
+      - "polymerase chain reaction"
+      - "assay"
+      - "cell culture"
+      - "tissue culture"
+      - "pipette"
+      - "centrifuge"
+      - "chromatography"
+      - "spectroscopy"
+      - "microscopy"
+      # Chemistry
+      - "chemistry"
+      - "chemical"
+      - "analytical chemistry"
+      - "organic chemistry"
+      # Equipment & Instruments
+      - "hplc"
+      - "gc"
+      - "gel electrophoresis"
+      - "flow cytometry"
+      - "microscope"
+      - "incubator"
+      # Regulations & Quality
+      - "gmp"
+      - "glp"
+      - "fda"
+      - "validation"
+      - "quality control"
+      - "qa"
+      - "qc"
+    keywords_negative:
+      # Tech/software terms (to prevent cross-contamination)
+      - "software"
+      - "developer"
+      - "programmer"
+      - "coding"
+      - "programming"
+      - "database"
+      - "api"
+      - "cloud"
+      - "devops"
+      - "javascript"
+      - "python developer"
+      - "full stack"
+      - "web development"
+      - "app development"
+      - "mobile development"
+      - "frontend"
+      - "backend"
+      - "infrastructure"
+      - "automation engineer"
+      - "scripting"
+      - "docker"
+      - "kubernetes"
+    threshold: 0.7
+    email_templates:
+      - template_id: "biotech_template_1"
+        subject: "Application for {{JOB_TITLE}} Position"
+        body: |
+          Dear Hiring Manager,
+
+          I am writing to express my strong interest in the {{JOB_TITLE}} position.
+
+          With my background in biology, laboratory research, and biotechnology, I am confident in my ability to contribute to your team. I have extensive hands-on experience with a wide range of laboratory techniques and instruments.
+
+          I have attached my resume for your review and would welcome the opportunity to discuss how my qualifications align with your needs.
+
+          Thank you for your consideration.
+
+          Best regards,
+          {{APPLICANT_NAME}}
+
+          --
+          Source: {{SOURCE_LINK}}
+      - template_id: "biotech_template_2"
+        subject: "{{JOB_TITLE}} - Application"
+        body: |
+          Hello,
+
+          I came across your posting for the {{JOB_TITLE}} position and would like to submit my application.
+
+          My experience includes molecular biology techniques, cell culture, and various analytical methods. I am passionate about scientific research and contributing to meaningful advances in biotechnology.
+
+          I would appreciate the opportunity to discuss this position further.
+
+          Best regards,
+          {{APPLICANT_NAME}}
+
+          --
+          Source: {{SOURCE_LINK}}
+      - template_id: "biotech_template_3"
+        subject: "Re: {{JOB_TITLE}}"
+        body: |
+          Dear Research Team,
+
+          I am excited to apply for the {{JOB_TITLE}} position at your organization.
+
+          With expertise in laboratory techniques, research methodologies, and biotechnology, I am confident in my ability to contribute effectively to your research goals. I have a proven track record of maintaining high standards in laboratory work.
+
+          Please find my resume attached. I look forward to hearing from you.
+
+          Best regards,
+          {{APPLICANT_NAME}}
+
+          --
+          Source: {{SOURCE_LINK}}
+
+# Metadata
+metadata:
+  version: "1.0.0"
+  default_threshold: 0.7
+  created_date: "2026-01-29"
+  description: "Two-profile applicant configuration for auto-apply system"

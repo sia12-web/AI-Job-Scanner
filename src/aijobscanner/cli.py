@@ -31,8 +31,12 @@ from aijobscanner.classify import MessageClassifier
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from storage import get_classification_statistics
+from storage import get_classification_statistics, init_db
 from aijobscanner.classify.run import update_project_track_with_classification
+
+# Auto-apply imports
+from aijobscanner.apply.send import process_pending_sends, SecurityError
+from aijobscanner.apply.outbox import OutboxManager
 
 
 def print_summary(results: list) -> None:
@@ -507,6 +511,110 @@ def classify_command(args) -> int:
         return 1
 
 
+def auto_apply_command(args) -> int:
+    """
+    Execute the auto-apply command.
+
+    Args:
+        args: Parsed command-line arguments
+
+    Returns:
+        Exit code (0 for success, 1 for error)
+    """
+    # Validate required flags for sending
+    if args.send and not args.yes_i_confirm:
+        print("[ERROR] --send requires --yes-i-confirm")
+        print("\nThis is a safety feature to prevent accidental sends.")
+        print("Re-run with: --send --yes-i-confirm")
+        return 1
+
+    # Check APPLY_ENABLED
+    apply_enabled = os.getenv("APPLY_ENABLED", "false").lower() == "true"
+
+    if args.send and not apply_enabled:
+        print("[ERROR] APPLY_ENABLED is false in .env")
+        print("\nTo enable sending:")
+        print("1. Edit .env file")
+        print("2. Set APPLY_ENABLED=true")
+        print("3. Re-run this command")
+        return 1
+
+    if args.send:
+        print("[WARN] *** SENDING MODE ENABLED ***")
+        print("[WARN] This will send REAL emails to employers")
+        print("[WARN] Press Ctrl+C to cancel within 5 seconds...")
+        import time as time_module
+        try:
+            time_module.sleep(5)
+        except KeyboardInterrupt:
+            print("\n\n[INTERRUPTED] Cancelled by user")
+            return 130
+
+    # Process
+    try:
+        # Connect to database
+        conn = init_db(args.db)
+
+        # Process pending sends
+        results = process_pending_sends(
+            db_conn=conn,
+            applicants_config=args.applicants,
+            outbox_dir=args.outbox_dir,
+            send_mode=args.send,
+            dry_run=args.dry_run,
+            max_per_run=args.max_per_run,
+            limit=args.limit,
+        )
+
+        # Print summary
+        print("\n" + "=" * 60)
+        print("AUTO-APPLY SUMMARY")
+        print("=" * 60)
+
+        print(f"\nProcessed: {results['processed']}")
+        print(f"[OK] Sent: {results['sent']}")
+        print(f"[INFO] Skipped: {results['skipped']}")
+        print(f"[FAIL] Errors: {results['errors']}")
+
+        if results['skip_reasons']:
+            print("\nSkip Reasons:")
+            for reason, count in results['skip_reasons'].items():
+                print(f"  - {reason}: {count}")
+
+        # Outbox statistics
+        outbox = OutboxManager(args.outbox_dir)
+        outbox_stats = outbox.get_statistics()
+
+        print(f"\nOutbox Statistics:")
+        print(f"  Total entries: {outbox_stats['total']}")
+        print(f"  Draft: {outbox_stats['draft']}")
+        print(f"  Sent: {outbox_stats['sent']}")
+        print(f"  Failed: {outbox_stats['failed']}")
+        print(f"  Skipped: {outbox_stats['skipped']}")
+
+        # Profile-separated statistics
+        profile_stats = outbox.get_statistics_by_profile()
+        if profile_stats:
+            print(f"\nBy Profile:")
+            for profile_id, stats in profile_stats.items():
+                print(f"  {profile_id}:")
+                print(f"    Total: {stats['total']}")
+                print(f"    Sent: {stats['sent']}")
+                print(f"    Skipped: {stats['skipped']}")
+
+        return 0
+
+    except KeyboardInterrupt:
+        print("\n\n[INTERRUPTED] Auto-apply cancelled by user")
+        return 130
+
+    except Exception as e:
+        print(f"\n[ERROR] Auto-apply failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
+
+
 def main():
     """Main CLI entrypoint."""
     parser = argparse.ArgumentParser(
@@ -709,6 +817,65 @@ For more information, see:
         help="Update project_track.md with classification summary (default path: project_track.md)",
     )
 
+    # auto-apply command
+    apply_parser = subparsers.add_parser(
+        "auto-apply",
+        help="Auto-apply to jobs with profile routing",
+    )
+
+    apply_parser.add_argument(
+        "--db",
+        type=str,
+        default="data/db/aijobscanner.sqlite3",
+        help="Path to SQLite database (default: data/db/aijobscanner.sqlite3)",
+    )
+
+    apply_parser.add_argument(
+        "--applicants",
+        type=str,
+        default="config/applicants.yaml",
+        help="Path to applicants.yaml config (default: config/applicants.yaml)",
+    )
+
+    apply_parser.add_argument(
+        "--outbox-dir",
+        type=str,
+        default="data/outbox",
+        help="Outbox directory (default: data/outbox)",
+    )
+
+    apply_parser.add_argument(
+        "--limit",
+        type=int,
+        default=50,
+        help="Maximum messages to process (default: 50)",
+    )
+
+    apply_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Create outbox entries but don't send (default behavior)",
+    )
+
+    apply_parser.add_argument(
+        "--send",
+        action="store_true",
+        help="Actually send emails (requires --yes-i-confirm)",
+    )
+
+    apply_parser.add_argument(
+        "--yes-i-confirm",
+        action="store_true",
+        help="Confirm you want to send real emails (safety flag)",
+    )
+
+    apply_parser.add_argument(
+        "--max-per-run",
+        type=int,
+        default=10,
+        help="Maximum emails to send this run (default: 10)",
+    )
+
     args = parser.parse_args()
 
     if not args.command:
@@ -726,6 +893,10 @@ For more information, see:
     elif args.command == "classify":
         # Run classify command (sync)
         exit_code = classify_command(args)
+        return exit_code
+    elif args.command == "auto-apply":
+        # Run auto-apply command (sync)
+        exit_code = auto_apply_command(args)
         return exit_code
     else:
         print(f"[ERROR] Unknown command: {args.command}")

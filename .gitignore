@@ -70,3 +70,9 @@ htmlcov/
 *.sqlite3
 data/db/
 data/review/
+
+# CV files (sensitive personal data)
+data/cv/
+
+# Outbox (application history)
+data/outbox/

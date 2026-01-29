@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-01-29
 **Current Phase**: Phase 0 - Foundation
-**Current Step**: Step 4 - Classification MVP ✅ **COMPLETE**
+**Current Step**: Step 5 - Multi-Profile Auto-Apply MVP ✅ **COMPLETE**
 **Repository**: https://github.com/sia12-web/AI-Job-Scanner.git
 
 ---
@@ -180,13 +180,98 @@ python -m aijobscanner classify --export-dir data/review
 
 **Classifier Version**: 1.0.0
 
+**Next**: Step 5 - Auto-Apply MVP
+
+#### Step 5: Multi-Profile Auto-Apply MVP ✅ COMPLETE
+- [x] Implement profile routing with ambiguity detection
+- [x] Create two applicant profiles (Tech + Biotech)
+- [x] Implement keyword-based scoring (English-only)
+- [x] Add template-based email system (NO LLM)
+- [x] Implement global kill-switch (APPLY_ENABLED)
+- [x] Create outbox lifecycle with JSONL audit trail
+- [x] Add global deduplication (tg_chat_id:tg_message_id:email)
+- [x] Implement SMTP sending with STARTTLS
+- [x] Add comprehensive safety gates
+
+**Implementation Date**: 2026-01-29
+
+**Profile Routing System**:
+- **Two Profiles**: Tech (software/automation) + Biotech (lab/research)
+- **Scoring Algorithm**: `(positive_matches × 1.0) - (negative_matches × 1.5)`
+- **Threshold**: 0.7 (profile must score ≥ 0.7 to be considered)
+- **Skip Conditions**:
+  - Both profiles ≥ threshold → "ambiguous_both_match"
+  - Neither ≥ threshold → "no_match"
+  - Scores within 0.1 → "tie_close"
+- **Word Boundary Matching**: Prevents false matches (e.g., "rest" in "restaurant")
+
+**Email Extraction Safety**:
+- 0 emails found → Skip ("no_email_found")
+- 1 email found → Use it
+- 2+ emails found → Skip ("multiple_emails_ambiguous") unless `--pick-email` flag
+
+**Auto-Apply Module Created**:
+- `config/applicants.yaml` - Profile config with keywords + templates
+- `src/aijobscanner/apply/routing.py` - Profile scoring + routing logic
+- `src/aijobscanner/apply/templates.py` - Template management + job title extraction
+- `src/aijobscanner/apply/outbox.py` - JSONL storage + global dedupe
+- `src/aijobscanner/apply/send.py` - SMTP sender with safety gates
+
+**CLI Command Added**:
+```bash
+python -m aijobscanner auto-apply [OPTIONS]
+```
+
+**Safety Features**:
+1. **Global Kill-Switch**: `APPLY_ENABLED=false` by default
+   - Checked BEFORE opening SMTP connection
+   - Requires: `--send` + `--yes-i-confirm` + `APPLY_ENABLED=true`
+
+2. **Cross-Contamination Prevention**:
+   - Ambiguity detection prevents sending wrong CV
+   - Negative keywords filter opposing profile terms
+
+3. **Global Deduplication**:
+   - Key: `tg_chat_id:tg_message_id:email`
+   - Never send same email for same job across all profiles
+
+4. **Rate Limiting**:
+   - `APPLY_SLEEP_SECONDS`: Delay between sends (default: 5)
+   - `APPLY_MAX_PER_RUN`: Max emails per run (default: 10)
+
+5. **CV Validation**:
+   - Must exist AND be PDF
+   - Checked before sending
+
+**Commands Available**:
+```bash
+# Dry-run (create outbox, don't send)
+python -m aijobscanner auto-apply --dry-run --limit 10
+
+# Send emails (requires flags + kill-switch)
+python -m aijobscanner auto-apply --send --yes-i-confirm --max-per-run 3
+
+# Full workflow
+python -m aijobscanner auto-apply --limit 50
+```
+
+**Configuration Files**:
+- `config/applicants.yaml` - Profile definitions with keywords/templates
+- `.env` - SMTP credentials + APPLY_ENABLED kill-switch
+- `data/cv/` - CV files (gitignored, 0700 permissions)
+
+**Outbox System**:
+- **Format**: JSONL files (`data/outbox/outbox_YYYYMMDD.jsonl`)
+- **Fields**: profile_id, routing scores, email content, status, timestamps
+- **Statuses**: draft → sent/failed/skipped
+- **Audit Trail**: Complete history of all application attempts
+
+**Classifier Version**: 1.0.0
+
 **Next**: Phase 1 - Notification MVP (Bot API)
 
-#### Step 5: Notification MVP (FUTURE)
-- [ ] Implement message reader for one source
-- [ ] Create PostEvent normalization structure
-- [ ] Test message ingestion from group
-- [ ] Test message ingestion from channel
+<!-- AUTO_APPLY_LAST_RUN_START -->
+<!-- AUTO_APPLY_LAST_RUN_END -->
 
 ---
 
