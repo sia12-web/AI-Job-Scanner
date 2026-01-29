@@ -1,0 +1,129 @@
+sources:
+- source_id: tg_invite_HBKt5e9nhxVjMzgx
+  display_name: Canada Jobs Group
+  type: group
+  public_handle: null
+  invite_link: https://t.me/+HBKt5e9nhxVjMzgx
+  language: fa
+  tags:
+  - jobs
+  - canada
+  - group
+  priority: high
+  enabled: true
+  allow_bot: unknown
+  access_constraints: Invite-only group. Requires join request approval.
+  ingest_mode: mtproto_user
+  validation_status: joined
+  notes: 'User-confirmed group. Multiple participants can post job opportunities.
+
+    Join via invite link. Monitor for AI-suitable remote tasks.
+
+    May require join request approval from admins.
+
+    '
+  last_validated_at: '2026-01-29T05:44:33.798750+00:00'
+  resolved_entity_id: 1342573502
+  resolved_entity_type: group
+- source_id: tg_vankar1
+  display_name: Vankar Jobs
+  type: channel
+  public_handle: vankar1
+  invite_link: null
+  language: fa
+  tags:
+  - jobs
+  - canada
+  priority: high
+  enabled: true
+  allow_bot: unknown
+  access_constraints: Public channel. Anyone can subscribe.
+  ingest_mode: mtproto_user
+  validation_status: joined
+  notes: 'User-confirmed channel. Posts job listings primarily for Persian-speaking
+
+    community in Canada. Subscribe/follow to receive updates.
+
+    '
+  last_validated_at: '2026-01-29T05:44:36.442495+00:00'
+  resolved_entity_id: 1367311696
+  resolved_entity_type: channel
+- source_id: tg_karyabi_canada
+  display_name: Karyabi Canada
+  type: channel
+  public_handle: karyabi_canada
+  invite_link: null
+  language: fa
+  tags:
+  - jobs
+  - canada
+  priority: high
+  enabled: true
+  allow_bot: unknown
+  access_constraints: Public channel. Anyone can subscribe.
+  ingest_mode: mtproto_user
+  validation_status: joined
+  notes: 'User-confirmed channel. "Karyabi" means "employment" in Farsi.
+
+    Focuses on job opportunities for Persian-speaking community in Canada.
+
+    '
+  last_validated_at: '2026-01-29T05:44:38.587395+00:00'
+  resolved_entity_id: 1221567462
+  resolved_entity_type: channel
+- source_id: tg_joyakar_vancouver
+  display_name: JoyaKar Vancouver
+  type: channel
+  public_handle: JoyaKarVancouver
+  invite_link: null
+  language: fa
+  tags:
+  - jobs
+  - canada
+  - vancouver
+  priority: high
+  enabled: true
+  allow_bot: unknown
+  access_constraints: Public channel. Anyone can subscribe.
+  ingest_mode: mtproto_user
+  validation_status: joined
+  notes: 'User-confirmed channel. "JoyaKar" relates to work/employment.
+
+    Specifically targets Vancouver region. High value for local monitoring.
+
+    '
+  last_validated_at: '2026-01-29T05:44:40.728536+00:00'
+  resolved_entity_id: 1065263857
+  resolved_entity_type: channel
+- source_id: tg_jobcanadaaa
+  display_name: Job Canada
+  type: channel
+  public_handle: jobcanadaaa
+  invite_link: null
+  language: fa
+  tags:
+  - jobs
+  - canada
+  priority: high
+  enabled: true
+  allow_bot: unknown
+  access_constraints: Public channel. Anyone can subscribe.
+  ingest_mode: mtproto_user
+  validation_status: joined
+  notes: 'User-confirmed channel. General job postings for Canada.
+
+    May include various types of employment opportunities.
+
+    '
+  last_validated_at: '2026-01-29T05:44:42.874140+00:00'
+  resolved_entity_id: 1910830444
+  resolved_entity_type: channel
+metadata:
+  version: '1.0'
+  last_updated: '2026-01-28'
+  total_sources: 5
+  source_breakdown:
+    channels: 4
+    groups: 1
+  default_ingest_mode: mtproto_user
+  default_language: fa
