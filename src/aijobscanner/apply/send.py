@@ -16,8 +16,8 @@ from email.mime.multipart import MIMEMultipart
 from typing import Dict, Any, Optional
 
 from .outbox import OutboxManager
-from .templates import load_applicant_profiles, extract_emails, extract_job_title, select_template, render_template
-from .routing import route_message, select_email
+from .templates import load_applicant_profiles, extract_job_title, select_template, render_template
+from .routing import route_message, select_email, extract_emails
 
 
 class SecurityError(Exception):
@@ -234,6 +234,9 @@ def process_pending_sends(
         Processing statistics dict
     """
     # Import fetch function here to avoid circular dependency
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
     from storage import fetch_ai_relevant_messages
 
     # Initialize components

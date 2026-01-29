@@ -441,7 +441,7 @@ def fetch_ai_relevant_messages(
     """
     query = """
         SELECT
-            id, source_id, tg_message_id, date, text,
+            id, source_id, tg_chat_id, tg_message_id, date, text,
             ai_relevance_score, permalink, classified_at
         FROM telegram_messages
         WHERE is_ai_relevant = 1
@@ -460,12 +460,13 @@ def fetch_ai_relevant_messages(
         {
             "id": row[0],
             "source_id": row[1],
-            "tg_message_id": row[2],
-            "date": row[3],
-            "text": row[4],
-            "score": row[5],
-            "permalink": row[6],
-            "classified_at": row[7],
+            "tg_chat_id": row[2],
+            "tg_message_id": row[3],
+            "date": row[4],
+            "text": row[5],
+            "ai_relevance_score": row[6],
+            "permalink": row[7],
+            "classified_at": row[8],
         }
         for row in rows
     ]
