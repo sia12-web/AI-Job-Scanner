@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-01-29
 **Current Phase**: Phase 0 - Foundation
-**Current Step**: Step 2 - MTProto Session Bootstrap + Source Validation ✅ **COMPLETE**
+**Current Step**: Step 3 - Message Ingestion MVP ✅ **COMPLETE**
 **Repository**: https://github.com/sia12-web/AI-Job-Scanner.git
 
 ---
@@ -56,12 +56,59 @@
 - ✅ 25 messages read (5 per source) to verify readability
 - ✅ Session file created: `data/telegram_session/14389253715.session`
 
-#### Step 3: Message Ingestion MVP (NEXT)
-- [ ] Implement continuous message reading from validated sources
-- [ ] Create PostEvent normalization structure
-- [ ] Test with one group source
-- [ ] Test with one channel source
-- [ ] Validate unified source model
+#### Step 3: Message Ingestion MVP ✅ COMPLETE
+- [x] Implement continuous message reading from validated sources
+- [x] Create PostEvent normalization structure
+- [x] Test with one group source
+- [x] Test with one channel source
+- [x] Validate unified source model
+
+**Implementation Date**: 2026-01-29
+
+**Database Schema Implemented**:
+- `ingestion_cursors` table (Single Source of Truth for state)
+- `telegram_messages` table (with idempotency via UNIQUE constraint)
+- Cursor-based incremental reading (only NEW messages)
+- Message sanitization for sensitive patterns
+
+**CLI Command Added**:
+```bash
+python -m aijobscanner ingest [OPTIONS]
+```
+
+**Key Files Created**:
+- `storage/__init__.py` - Storage module exports
+- `storage/sqlite.py` - Database initialization, cursor management, message storage
+- `src/aijobscanner/telegram/ingest.py` - MessageIngestor class with incremental reading
+- `docs/runbooks/telegram_ingestion.md` - Ingestion how-to guide
+
+**Features Implemented**:
+1. Cursor-based incremental reading (only fetch messages newer than cursor)
+2. Idempotency via UNIQUE(source_id, tg_message_id) constraint
+3. Message sanitization (redacts login codes, verification codes)
+4. Dry-run mode for safe testing
+5. Per-source filtering with --only flag
+6. JSON report generation
+7. Auto-update of project_track.md with ingestion markers
+
+**Commands Available**:
+```bash
+# Dry run (no database writes)
+python -m aijobscanner ingest --dry-run
+
+# Ingest from single source
+python -m aijobscanner ingest --only tg_vankar1 --limit-per-source 50
+
+# Full ingestion
+python -m aijobscanner ingest --update-project-track
+```
+
+**Security Measures**:
+- .gitignore updated to block data/db/
+- Session files remain protected
+- Message sanitization prevents credential storage
+
+**Next**: Phase 0 Step 4 - Basic Classification
 
 #### Step 4: Basic Classification (FUTURE)
 - [ ] Implement message reader for one source
@@ -141,20 +188,27 @@ AI Job Scanner/
 │   └── aijobscanner/
 │       ├── __init__.py
 │       ├── __main__.py
-│       ├── cli.py             # CLI entrypoint
+│       ├── cli.py             # CLI entrypoint (validate-sources, ingest)
 │       └── telegram/
 │           ├── __init__.py
 │           ├── config.py      # YAML loading/saving
-│           └── validate.py    # Validation logic
+│           ├── validate.py    # Validation logic
+│           └── ingest.py      # Message ingestion logic
+│
+├── storage/                   # Storage layer (NEW)
+│   ├── __init__.py
+│   └── sqlite.py              # SQLite database operations
 │
 ├── data/                      # Data storage (gitignored)
 │   ├── telegram_session/      # Telethon session files
-│   └── reports/               # Validation reports
+│   ├── db/                    # SQLite databases (gitignored, NEW)
+│   └── reports/               # Validation and ingestion reports
 │
 ├── docs/                      # Documentation
 │   ├── telegram_access.md     # Two-lane architecture docs
 │   └── runbooks/
-│       └── telegram_validation.md  # Validation how-to guide
+│       ├── telegram_validation.md  # Validation how-to guide
+│       └── telegram_ingestion.md   # Ingestion how-to guide (NEW)
 │
 ├── ADR/                       # Architecture Decision Records
 │   └── 001-telegram-ingestion-choice.md
@@ -213,16 +267,7 @@ If you need to continue work after restarting your terminal:
 
 ## Next 3 Steps
 
-### Immediate (Phase 0 Step 3)
-**Goal**: Implement message ingestion MVP
-- Add continuous message reading from validated sources
-- Create PostEvent normalization structure
-- Test with one group and one channel
-- Validate unified source model
-
-**Estimated effort**: 4-6 hours
-
-### Short-term (Phase 0 Step 4)
+### Immediate (Phase 0 Step 4)
 **Goal**: Basic job classification
 - Extract job details from messages
 - Implement simple keyword matching
@@ -231,7 +276,7 @@ If you need to continue work after restarting your terminal:
 
 **Estimated effort**: 4-6 hours
 
-### Medium-term (Phase 1: Full Pipeline)
+### Short-term (Phase 1: Full Pipeline)
 **Goal**: End-to-end job scanning pipeline
 - Implement continuous monitoring
 - Add notification system (Bot API)
@@ -239,6 +284,15 @@ If you need to continue work after restarting your terminal:
 - Set up monitoring and alerts
 
 **Estimated effort**: 8-12 hours
+
+### Medium-term (Production Deployment)
+**Goal**: Production-ready deployment
+- Containerize application (Docker)
+- Set up CI/CD pipeline
+- Configure monitoring and alerting
+- Deploy to cloud infrastructure
+
+**Estimated effort**: 12-16 hours
 
 ---
 
@@ -295,6 +349,83 @@ If you need to continue work after restarting your terminal:
 ---
 
 ## Change Log
+
+### 2026-01-29 - Phase 0 Step 3: Message Ingestion MVP
+**Completed**:
+- Created storage layer (storage/sqlite.py) with database operations
+- Implemented message ingestion module (telegram/ingest.py) with MessageIngestor class
+- Added ingest command to CLI with multiple options (--dry-run, --only, --limit-per-source, --force, --update-project-track)
+- Created ingestion runbook (docs/runbooks/telegram_ingestion.md)
+- Updated .gitignore to block data/db/
+- Updated project_track.md with ingestion markers
+
+**Database Schema Implemented**:
+- `ingestion_cursors` table (Single Source of Truth for state)
+- `telegram_messages` table (with idempotency via UNIQUE constraint)
+- Functions: init_db, get_cursor, upsert_cursor, insert_message_if_new, get_high_water_marks, get_message_stats
+
+**Key Features Implemented**:
+1. Cursor-based incremental reading (only fetch messages newer than cursor)
+2. Idempotency via UNIQUE(source_id, tg_message_id) constraint
+3. Message sanitization (redacts login codes, verification codes, reset codes)
+4. Dry-run mode for safe testing
+5. Per-source filtering with --only flag
+6. Force mode to ignore validation_status
+7. JSON report generation in data/reports/
+8. Auto-update of project_track.md with ingestion markers
+
+**Message Sanitization Patterns**:
+- "login code" + 5-6 digits → "[LOGIN CODE REDACTED]"
+- "Telegram code" + 5-6 digits → "[TELEGRAM CODE REDACTED]"
+- "code:" + 5-6 digits → "code: [REDACTED]"
+- "verification code:" + 5-6 digits → "verification code: [REDACTED]"
+- "reset code" + 5-6 digits → "[RESET CODE REDACTED]"
+
+**Files Created**:
+- `storage/__init__.py` - Storage module exports
+- `storage/sqlite.py` - Database operations (213 lines)
+- `src/aijobscanner/telegram/ingest.py` - MessageIngestor class (436 lines)
+- `docs/runbooks/telegram_ingestion.md` - Comprehensive runbook
+
+**Files Modified**:
+- `src/aijobscanner/telegram/__init__.py` - Added MessageIngestor, sanitize_text exports
+- `src/aijobscanner/cli.py` - Added ingest command with 9 arguments, ingest_sources_command function, update_project_track_with_ingestion function
+- `.gitignore` - Added data/db/ to blocked paths
+
+**CLI Commands Available**:
+```bash
+# Dry run (no database writes)
+python -m aijobscanner ingest --dry-run
+
+# Ingest from single source with custom limit
+python -m aijobscanner ingest --only tg_vankar1 --limit-per-source 50
+
+# Full ingestion with project track update
+python -m aijobscanner ingest --update-project-track
+
+# Force ingest (ignore validation status)
+python -m aijobscanner ingest --force
+```
+
+**Ingestion Markers Added to project_track.md**:
+- "<!-- INGESTION_LAST_RUN_START -->"
+- "<!-- INGESTION_LAST_RUN_END -->"
+
+**Security Measures**:
+- .gitignore updated to block data/db/
+- Message sanitization prevents credential storage
+- Session files remain protected
+- No sensitive data in JSON reports
+
+**Testing Ready**:
+- Dry-run mode allows safe testing without database writes
+- Small limits available for initial testing (--limit-per-source 20)
+- Single source testing with --only flag
+- Idempotency can be verified by running twice
+
+**Next**: Phase 0 Step 4 - Basic Classification
+
+---
 
 ### 2026-01-29 - Phase 0 Step 2: MTProto Session Bootstrap + Source Validation
 **Completed**:
@@ -515,3 +646,10 @@ git push -u origin master
 ---
 
 **Remember**: ALWAYS update this file when completing work or making changes. This is the single source of truth for project progress.
+
+---
+
+## Ingestion Last Run Summary
+
+<!-- INGESTION_LAST_RUN_START -->
+<!-- INGESTION_LAST_RUN_END -->

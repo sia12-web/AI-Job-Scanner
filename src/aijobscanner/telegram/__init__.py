@@ -9,6 +9,7 @@ Handles Telegram client operations including:
 
 from .config import load_sources, save_sources, get_enabled_sources, update_source_validation
 from .validate import SourceValidator
+from .ingest import MessageIngestor, sanitize_text
 
 __all__ = [
     "load_sources",
@@ -16,4 +17,6 @@ __all__ = [
     "get_enabled_sources",
     "update_source_validation",
     "SourceValidator",
+    "MessageIngestor",
+    "sanitize_text",
 ]
