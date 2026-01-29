@@ -13,6 +13,12 @@ from .sqlite import (
     upsert_cursor,
     insert_message_if_new,
     get_high_water_marks,
+    get_message_stats,
+    fetch_pending_messages,
+    upsert_message_classification,
+    mark_message_classified,
+    get_classification_statistics,
+    fetch_ai_relevant_messages,
 )
 
 __all__ = [
@@ -21,4 +27,10 @@ __all__ = [
     "upsert_cursor",
     "insert_message_if_new",
     "get_high_water_marks",
+    "get_message_stats",
+    "fetch_pending_messages",
+    "upsert_message_classification",
+    "mark_message_classified",
+    "get_classification_statistics",
+    "fetch_ai_relevant_messages",
 ]

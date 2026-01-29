@@ -69,3 +69,4 @@ htmlcov/
 *.sqlite
 *.sqlite3
 data/db/
+data/review/

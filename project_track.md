@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-01-29
 **Current Phase**: Phase 0 - Foundation
-**Current Step**: Step 3 - Message Ingestion MVP ✅ **COMPLETE**
+**Current Step**: Step 4 - Classification MVP ✅ **COMPLETE**
 **Repository**: https://github.com/sia12-web/AI-Job-Scanner.git
 
 ---
@@ -108,9 +108,81 @@ python -m aijobscanner ingest --update-project-track
 - Session files remain protected
 - Message sanitization prevents credential storage
 
-**Next**: Phase 0 Step 4 - Basic Classification
+**Next**: Phase 1 - Full Pipeline (Notification System)
 
-#### Step 4: Basic Classification (FUTURE)
+#### Step 4: Classification MVP ✅ COMPLETE
+- [x] Implement heuristic classification with weighted keywords
+- [x] Create message_classifications audit table
+- [x] Add bilingual keyword groups (EN/FA)
+- [x] Implement scoring guardrails (remote requires tech)
+- [x] Export candidates to CSV with formula injection mitigation
+- [x] Add classify command to CLI
+
+**Implementation Date**: 2026-01-29
+
+**Database Schema Updates**:
+- `telegram_messages`: Added `ai_relevance_score`, `classified_at` columns
+- `message_classifications`: Audit table with classification_metadata
+- Full classification history with version tracking
+
+**Classification Module Created**:
+- `src/aijobscanner/classify/rules.py` - Weighted keyword groups (8 groups)
+- `src/aijobscanner/classify/run.py` - MessageClassifier class
+- Bilingual support: English (EN) + Persian (FA) keywords
+
+**Keyword Groups**:
+1. Tech Core High (1.0) - software, developer, API, database
+2. Automation High (1.0) - automation, script, Python, workflow
+3. DevOps High (1.0) - Docker, Kubernetes, AWS, Linux
+4. AI/ML High (1.0) - AI, ML, LLM, NLP
+5. Security High (1.0) - pentest, vulnerability, OWASP
+6. IT Support Mid (0.7) - helpdesk, sysadmin, network
+7. Remote Low (0.2) - remote, freelance - **Guardrail**: Requires tech keywords
+8. Negative NonTech (-1.0) - cashier, driver, warehouse - filters out non-tech
+
+**CLI Command Added**:
+```bash
+python -m aijobscanner classify [OPTIONS]
+```
+
+**Key Features Implemented**:
+1. Heuristic scoring with weighted keyword matching
+2. Guardrail: Remote keywords only count when tech keywords matched
+3. Negative keyword filtering for non-tech jobs
+4. Audit trail in message_classifications table
+5. CSV export with RFC 4180 compliance
+6. Formula injection mitigation (prefix =, +, -, @ with ')
+7. Snippet truncation to 200 characters
+8. Dry-run mode for safe testing
+9. Reprocess mode for reclassification
+10. Auto-update of project_track.md with classification markers
+
+**Commands Available**:
+```bash
+# Dry run (no database writes)
+python -m aijobscanner classify --dry-run
+
+# Classify pending messages
+python -m aijobscanner classify --limit 50
+
+# Reprocess already-classified
+python -m aijobscanner classify --reprocess
+
+# Classify and export to CSV
+python -m aijobscanner classify --export-dir data/review
+```
+
+**Security Measures**:
+- .gitignore updated to block data/review/
+- CSV export: Formula injection mitigation (= + - @ prefixing)
+- Snippet truncation to 200 characters
+- No full text export (only snippets)
+
+**Classifier Version**: 1.0.0
+
+**Next**: Phase 1 - Notification MVP (Bot API)
+
+#### Step 5: Notification MVP (FUTURE)
 - [ ] Implement message reader for one source
 - [ ] Create PostEvent normalization structure
 - [ ] Test message ingestion from group
@@ -188,27 +260,33 @@ AI Job Scanner/
 │   └── aijobscanner/
 │       ├── __init__.py
 │       ├── __main__.py
-│       ├── cli.py             # CLI entrypoint (validate-sources, ingest)
+│       ├── cli.py             # CLI entrypoint (validate-sources, ingest, classify)
+│       ├── classify/          # NEW - Classification module
+│       │   ├── __init__.py
+│       │   ├── rules.py       # Keyword definitions (bilingual)
+│       │   └── run.py         # MessageClassifier class
 │       └── telegram/
 │           ├── __init__.py
 │           ├── config.py      # YAML loading/saving
 │           ├── validate.py    # Validation logic
 │           └── ingest.py      # Message ingestion logic
 │
-├── storage/                   # Storage layer (NEW)
+├── storage/                   # Storage layer
 │   ├── __init__.py
-│   └── sqlite.py              # SQLite database operations
+│   └── sqlite.py              # SQLite database operations (with classification)
 │
 ├── data/                      # Data storage (gitignored)
 │   ├── telegram_session/      # Telethon session files
-│   ├── db/                    # SQLite databases (gitignored, NEW)
+│   ├── db/                    # SQLite databases (gitignored)
+│   ├── review/                # CSV exports (gitignored) ← NEW
 │   └── reports/               # Validation and ingestion reports
 │
 ├── docs/                      # Documentation
 │   ├── telegram_access.md     # Two-lane architecture docs
 │   └── runbooks/
 │       ├── telegram_validation.md  # Validation how-to guide
-│       └── telegram_ingestion.md   # Ingestion how-to guide (NEW)
+│       ├── telegram_ingestion.md   # Ingestion how-to guide
+│       └── classification_mvp.md    # Classification how-to guide ← NEW
 │
 ├── ADR/                       # Architecture Decision Records
 │   └── 001-telegram-ingestion-choice.md
@@ -349,6 +427,86 @@ If you need to continue work after restarting your terminal:
 ---
 
 ## Change Log
+
+### 2026-01-29 - Phase 0 Step 4: Classification MVP (Heuristic)
+**Completed**:
+- Created storage layer updates (storage/sqlite.py) with classification functions
+- Implemented classification module (src/aijobscanner/classify/)
+- Added classify command to CLI with multiple options
+- Created classification runbook (docs/runbooks/classification_mvp.md)
+- Updated .gitignore to block data/review/
+- Updated project_track.md with Step 4 completion details
+
+**Database Schema Updates**:
+- `telegram_messages`: Added `ai_relevance_score`, `classified_at` columns
+- `message_classifications` table (audit trail with classification_metadata)
+- Functions: fetch_pending_messages, upsert_message_classification, mark_message_classified, get_classification_statistics, fetch_ai_relevant_messages
+
+**Classification Module Created**:
+- `src/aijobscanner/classify/rules.py` - Weighted keyword groups (8 groups, bilingual EN/FA)
+- `src/aijobscanner/classify/run.py` - MessageClassifier class with CSV export
+- `src/aijobscanner/classify/__init__.py` - Module exports
+
+**Keyword Groups Implemented**:
+1. Tech Core High (1.0) - software, developer, API, database, برنامه نویس
+2. Automation High (1.0) - automation, script, Python, workflow, اتوماسیون
+3. DevOps High (1.0) - Docker, Kubernetes, AWS, Linux, دوکر, لینوکس
+4. AI/ML High (1.0) - AI, ML, LLM, NLP, هوش مصنوعی
+5. Security High (1.0) - pentest, vulnerability, OWASP, امنیت
+6. IT Support Mid (0.7) - helpdesk, sysadmin, network, پشتیبانی IT
+7. Remote Low (0.2) - remote, freelance, دورکاری - **Guardrail**: Requires tech keywords
+8. Negative NonTech (-1.0) - cashier, driver, warehouse, صندوقدار, راننده
+
+**Key Features Implemented**:
+1. Heuristic scoring with weighted keyword matching
+2. Guardrail: Remote keywords only count when tech keywords matched
+3. Negative keyword filtering for non-tech jobs
+4. Audit trail in message_classifications table
+5. CSV export with RFC 4180 compliance
+6. Formula injection mitigation (prefix =, +, -, @ with single quote)
+7. Snippet truncation to 200 characters
+8. Dry-run mode for safe testing
+9. Reprocess mode for reclassification with version tracking
+10. Auto-update of project_track.md with classification markers
+
+**CLI Commands Available**:
+```bash
+# Dry run (no database writes)
+python -m aijobscanner classify --dry-run
+
+# Classify pending messages
+python -m aijobscanner classify --limit 50
+
+# Reprocess already-classified
+python -m aijobscanner classify --reprocess
+
+# Export to CSV
+python -m aijobscanner classify --export-dir data/review --export-limit 50
+```
+
+**Security Measures Implemented**:
+- .gitignore updated to block data/review/
+- CSV export: Formula injection mitigation (= + - @ prefixing)
+- Snippet truncation to 200 characters
+- No full text export (only snippets in CSV)
+
+**Classifier Version**: 1.0.0
+
+**Files Created**:
+- `src/aijobscanner/classify/__init__.py` - Classification module exports
+- `src/aijobscanner/classify/rules.py` - Keyword definitions (450+ lines)
+- `src/aijobscanner/classify/run.py` - MessageClassifier class (320+ lines)
+- `docs/runbooks/classification_mvp.md` - Comprehensive runbook (500+ lines)
+
+**Files Modified**:
+- `storage/sqlite.py` - Added classification functions (fetch_pending_messages, upsert_message_classification, mark_message_classified, get_classification_statistics, fetch_ai_relevant_messages, init_db updates)
+- `storage/__init__.py` - Added classification function exports
+- `src/aijobscanner/cli.py` - Added classify command with 8 arguments
+- `.gitignore` - Added data/review/ to blocked paths
+
+**Next**: Phase 1 - Notification MVP (Bot API)
+
+---
 
 ### 2026-01-29 - Phase 0 Step 3: Message Ingestion MVP
 **Completed**:
@@ -653,3 +811,10 @@ git push -u origin master
 
 <!-- INGESTION_LAST_RUN_START -->
 <!-- INGESTION_LAST_RUN_END -->
+
+---
+
+## Classification Last Run Summary
+
+<!-- CLASSIFICATION_LAST_RUN_START -->
+<!-- CLASSIFICATION_LAST_RUN_END -->

@@ -26,6 +26,14 @@ from aijobscanner.telegram import (
     MessageIngestor,
 )
 
+from aijobscanner.classify import MessageClassifier
+
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from storage import get_classification_statistics
+from aijobscanner.classify.run import update_project_track_with_classification
+
 
 def print_summary(results: list) -> None:
     """Print validation summary to console."""
@@ -411,6 +419,94 @@ def update_project_track_with_ingestion(
         print(f"[WARN] Failed to update project_track.md: {e}")
 
 
+def classify_command(args) -> int:
+    """
+    Execute the classify command.
+
+    Args:
+        args: Parsed command-line arguments
+
+    Returns:
+        Exit code (0 for success, 1 for error)
+    """
+    # Initialize classifier
+    classifier = MessageClassifier(args.db)
+
+    try:
+        # Connect to database
+        classifier.connect()
+
+        # Get initial statistics
+        stats_before = get_classification_statistics(classifier.conn)
+        print(f"[INFO] Total messages in database: {stats_before['total_messages']}")
+        print(f"[INFO] Pending classification: {stats_before['pending_count']}")
+        print(f"[INFO] Already classified: {stats_before['classified_count']}")
+
+        # Classify batch
+        print(f"\n[INFO] Starting classification (dry-run={args.dry_run})")
+
+        results = classifier.classify_batch(
+            limit=args.limit,
+            only_source_id=args.only,
+            reprocess=args.reprocess,
+            dry_run=args.dry_run,
+        )
+
+        # Print summary
+        print("\n" + "=" * 60)
+        print("CLASSIFICATION SUMMARY")
+        print("=" * 60)
+
+        print(f"\nProcessed: {results['processed']}")
+        print(f"[OK] AI Relevant: {results['ai_relevant']}")
+        print(f"[INFO] Not Relevant: {results['not_relevant']}")
+        print(f"[FAIL] Errors: {results['errors']}")
+
+        # Export candidates if not dry-run and we have AI-relevant messages
+        if not args.dry_run and results['ai_relevant'] > 0:
+            print("\n[INFO] Exporting AI-relevant candidates to CSV...")
+            csv_path = classifier.export_candidates_to_csv(
+                export_dir=args.export_dir,
+                export_limit=args.export_limit,
+            )
+            if csv_path:
+                print(f"[OK] Exported to: {csv_path}")
+
+        # Update project_track.md if requested
+        if args.update_project_track and not args.dry_run:
+            stats_after = get_classification_statistics(classifier.conn)
+
+            print(f"\n[INFO] Updating project_track.md...")
+            update_project_track_with_classification(
+                args.update_project_track,
+                results,
+                stats_after,
+            )
+            print("[OK] project_track.md updated")
+
+        # Disconnect
+        classifier.disconnect()
+
+        return 0
+
+    except KeyboardInterrupt:
+        print("\n\n[INTERRUPTED] Classification cancelled by user")
+        classifier.disconnect()
+        return 130
+
+    except Exception as e:
+        print(f"\n[ERROR] Classification failed: {e}")
+        import traceback
+        traceback.print_exc()
+
+        try:
+            classifier.disconnect()
+        except:
+            pass
+
+        return 1
+
+
 def main():
     """Main CLI entrypoint."""
     parser = argparse.ArgumentParser(
@@ -552,6 +648,67 @@ For more information, see:
         help="Update project_track.md with ingestion summary (default path: project_track.md)",
     )
 
+    # classify command
+    classify_parser = subparsers.add_parser(
+        "classify",
+        help="Classify messages for AI/automation relevance",
+    )
+
+    classify_parser.add_argument(
+        "--db",
+        type=str,
+        default="data/db/aijobscanner.sqlite3",
+        help="Path to SQLite database (default: data/db/aijobscanner.sqlite3)",
+    )
+
+    classify_parser.add_argument(
+        "--limit",
+        type=int,
+        default=500,
+        help="Maximum messages to classify (default: 500)",
+    )
+
+    classify_parser.add_argument(
+        "--only",
+        type=str,
+        metavar="SOURCE_ID",
+        help="Classify only from the specified source ID",
+    )
+
+    classify_parser.add_argument(
+        "--reprocess",
+        action="store_true",
+        help="Reprocess already-classified messages",
+    )
+
+    classify_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Classify without writing to database",
+    )
+
+    classify_parser.add_argument(
+        "--export-dir",
+        type=str,
+        default="data/review",
+        help="CSV export directory (default: data/review)",
+    )
+
+    classify_parser.add_argument(
+        "--export-limit",
+        type=int,
+        default=100,
+        help="Maximum candidates to export (default: 100)",
+    )
+
+    classify_parser.add_argument(
+        "--update-project-track",
+        type=str,
+        nargs="?",
+        const="project_track.md",
+        help="Update project_track.md with classification summary (default path: project_track.md)",
+    )
+
     args = parser.parse_args()
 
     if not args.command:
@@ -565,6 +722,10 @@ For more information, see:
     elif args.command == "ingest":
         # Run async command
         exit_code = asyncio.run(ingest_sources_command(args))
+        return exit_code
+    elif args.command == "classify":
+        # Run classify command (sync)
+        exit_code = classify_command(args)
         return exit_code
     else:
         print(f"[ERROR] Unknown command: {args.command}")
